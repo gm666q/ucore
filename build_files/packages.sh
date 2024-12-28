@@ -10,5 +10,6 @@ rpm-ostree override remove \
   --install freeipa-client \
   --install hdparm \
   --install nfs-utils \
+  --install pcp-zeroconf \
   --install realmd \
   --install zsh
