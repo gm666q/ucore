@@ -14,5 +14,7 @@ rpm-ostree override remove \
   --install pcp-zeroconf \
   --install realmd \
   --install tuned \
+  --install tuned-profiles-atomic \
   --install tuned-utils \
+  --install tuned-utils-systemtap \
   --install zsh
