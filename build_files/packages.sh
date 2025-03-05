@@ -2,19 +2,23 @@
 
 set -ouex pipefail
 
-rpm-ostree override remove \
-  nfs-utils-coreos \
-  --install cockpit-files \
-  --install cockpit-ostree \
-  --install cockpit-storaged \
-  --install duperemove \
-  --install freeipa-client \
-  --install hdparm \
-  --install nfs-utils \
-  --install pcp-zeroconf \
-  --install realmd \
-  --install tuned \
-  --install tuned-profiles-atomic \
-  --install tuned-utils \
-  --install tuned-utils-systemtap \
-  --install zsh
+# NFS
+dnf5 swap -y nfs-utils-coreos nfs-utils
+
+# Cockpit Applications
+dnf5 install -y cockpit-files cockpit-ostree cockpit-storaged
+
+# FreeIPA Client
+dnf5 install -y freeipa-client realmd
+
+# PCP
+dnf5 install -y pcp-zeroconf
+
+# Storage Utils
+dnf5 install -y duperemove hdparm
+
+# Tools
+dnf5 install -y zsh
+
+# Tuned
+dnf5 install -y tuned tuned-profiles-atomic tuned-utils tuned-utils-systemtap
