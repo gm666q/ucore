@@ -18,8 +18,8 @@ default:
 check:
     #!/usr/bin/bash
     find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt --check -f $file
+        echo "Checking syntax: $file"
+        just --unstable --fmt --check -f $file
     done
     echo "Checking syntax: Justfile"
     just --unstable --fmt --check -f Justfile
@@ -29,8 +29,8 @@ check:
 fix:
     #!/usr/bin/bash
     find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt -f $file
+        echo "Checking syntax: $file"
+        just --unstable --fmt -f $file
     done
     echo "Checking syntax: Justfile"
     just --unstable --fmt -f Justfile || { exit 1; }
@@ -45,6 +45,7 @@ clean:
     rm -f previous.manifest.json
     rm -f changelog.md
     rm -f output.env
+    rm -f output/
 
 # Sudo Clean Repo
 [group('Utility')]
@@ -157,11 +158,13 @@ _rootful_load_image $target_image=image_name $tag=default_tag:
     return_code=$?
     set -e
 
+    USER_IMG_ID=$(podman images --filter reference="${target_image}:${tag}" --format "'{{ '{{.ID}}' }}'")
+
     if [[ $return_code -eq 0 ]]; then
         # If the image is found, load it into rootful podman
         ID=$(just sudoif podman images --filter reference="${target_image}:${tag}" --format "'{{ '{{.ID}}' }}'")
-        if [[ -z "$ID" ]]; then
-            # If the image ID is not found, copy the image from user podman to root podman
+        if [[ "$ID" != "$USER_IMG_ID" ]]; then
+            # If the image ID is not found or different from user, copy the image from user podman to root podman
             COPYTMP=$(mktemp -p "${PWD}" -d -t _build_podman_scp.XXXXXXXXXX)
             just sudoif TMPDIR=${COPYTMP} podman image scp ${UID}@localhost::"${target_image}:${tag}" root@localhost::"${target_image}:${tag}"
             rm -rf "${COPYTMP}"
@@ -184,21 +187,15 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
     #!/usr/bin/env bash
     set -euo pipefail
 
-    mkdir -p "output"
-
-    echo "Cleaning up previous build"
-    if [[ $type == iso ]]; then
-        sudo rm -rf "output/bootiso" || true
-    else
-        sudo rm -rf "output/${type}" || true
-    fi
-
     args="--type ${type} "
-    args+="--use-librepo=True"
+    args+="--use-librepo=True "
+    args+="--rootfs=btrfs"
 
     if [[ $target_image == localhost/* ]]; then
         args+=" --local"
     fi
+
+    BUILDTMP=$(mktemp -p "${PWD}" -d -t _build-bib.XXXXXXXXXX)
 
     sudo podman run \
       --rm \
@@ -208,13 +205,16 @@ _build-bib $target_image $tag $type $config: (_rootful_load_image target_image t
       --net=host \
       --security-opt label=type:unconfined_t \
       -v $(pwd)/${config}:/config.toml:ro \
-      -v $(pwd)/output:/output \
+      -v $BUILDTMP:/output \
       -v /var/lib/containers/storage:/var/lib/containers/storage \
       "${bib_image}" \
       ${args} \
       "${target_image}:${tag}"
 
-    sudo chown -R $USER:$USER output
+    mkdir -p output
+    sudo mv -f $BUILDTMP/* output/
+    sudo rmdir $BUILDTMP
+    sudo chown -R $USER:$USER output/
 
 # Podman builds the image from the Containerfile and creates a bootable image
 # Parameters:
@@ -286,12 +286,11 @@ _run-vm $target_image $tag $type $config:
     run_args+=(--env "GPU=Y")
     run_args+=(--device=/dev/kvm)
     run_args+=(--volume "${PWD}/${image_file}":"/boot.${type}")
-    run_args+=(docker.io/qemux/qemu-docker)
+    run_args+=(docker.io/qemux/qemu)
 
     # Run the VM and open the browser to connect
-    podman run "${run_args[@]}" &
-    xdg-open http://localhost:${port}
-    fg "%podman"
+    (sleep 30 && xdg-open http://localhost:"$port") &
+    podman run "${run_args[@]}"
 
 # Run a virtual machine from a QCOW2 image
 [group('Run Virtal Machine')]
@@ -326,8 +325,24 @@ spawn-vm rebuild="0" type="qcow2" ram="6G":
 
 # Runs shell check on all Bash scripts
 lint:
+    #!/usr/bin/env bash
+    set -eoux pipefail
+    # Check if shellcheck is installed
+    if ! command -v shellcheck &> /dev/null; then
+        echo "shellcheck could not be found. Please install it."
+        exit 1
+    fi
+    # Run shellcheck on all Bash scripts
     /usr/bin/find . -iname "*.sh" -type f -exec shellcheck "{}" ';'
 
 # Runs shfmt on all Bash scripts
 format:
+     #!/usr/bin/env bash
+    set -eoux pipefail
+    # Check if shfmt is installed
+    if ! command -v shfmt &> /dev/null; then
+        echo "shellcheck could not be found. Please install it."
+        exit 1
+    fi
+    # Run shfmt on all Bash scripts
     /usr/bin/find . -iname "*.sh" -type f -exec shfmt --write "{}" ';'
