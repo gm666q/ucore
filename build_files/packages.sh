@@ -15,7 +15,7 @@ dnf5 install -y pcp-zeroconf
 dnf5 install -y duperemove hdparm
 
 # Tools
-dnf5 install -y zsh
+dnf5 install -y igt-gpu-tools zsh
 
 # Tuned
 dnf5 install -y tuned tuned-profiles-atomic tuned-utils tuned-utils-systemtap
