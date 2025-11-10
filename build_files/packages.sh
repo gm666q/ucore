@@ -12,10 +12,10 @@ dnf5 install -y freeipa-client realmd
 dnf5 install -y pcp-zeroconf
 
 # Storage Utils
-dnf5 install -y duperemove hdparm
+dnf5 install -y duperemove hdparm smartctl
 
 # Tools
-dnf5 install -y igt-gpu-tools zsh
+dnf5 install -y igt-gpu-tools pciutils usbutils zsh
 
 # Tuned
 dnf5 install -y tuned tuned-profiles-atomic tuned-utils tuned-utils-systemtap
