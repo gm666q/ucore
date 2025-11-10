@@ -5,9 +5,6 @@ set -ouex pipefail
 # NFS
 dnf5 swap -y nfs-utils-coreos nfs-utils
 
-# Cockpit Applications
-dnf5 install -y cockpit-files cockpit-ostree cockpit-storaged
-
 # FreeIPA Client
 dnf5 install -y freeipa-client realmd
 

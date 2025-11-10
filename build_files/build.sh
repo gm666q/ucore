@@ -2,6 +2,6 @@
 
 set -ouex pipefail
 
-/ctx/cockpit-zfs.sh
 /ctx/packages.sh
+/ctx/cockpit-zfs.sh
 /ctx/systemd.sh
