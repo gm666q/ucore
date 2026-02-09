@@ -4,7 +4,6 @@ set -ouex pipefail
 
 systemctl enable cockpit.service
 systemctl enable netavark-firewalld-reload.service
-#systemctl enable tuned.service
 
 # System Podman
 systemctl enable podman.socket

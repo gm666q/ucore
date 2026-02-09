@@ -18,4 +18,4 @@ dnf5 install -y duperemove hdparm smartctl
 dnf5 install -y igt-gpu-tools pciutils usbutils zsh
 
 # Tuned
-dnf5 install -y tuned tuned-profiles-atomic tuned-utils tuned-utils-systemtap
+#dnf5 install -y tuned-utils tuned-utils-systemtap
